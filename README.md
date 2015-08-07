@@ -16,7 +16,7 @@ var askOnce = require('ask-once');
 
 ## API
 
-### [askOnce](index.js#L32)
+### [askOnce](index.js#L27)
 
 Create a question asking function that only asks a question if the answer is not found in the store or options force the question.
 
@@ -30,14 +30,9 @@ Create a question asking function that only asks a question if the answer is not
 
 ```js
 var ask = require('ask-once')(questions, store);
-ask('username', function (err, answer) {
-  if (err) return console.error(err);
-  console.log(answer);
-  //=> doowb
-});
 ```
 
-### [ask](index.js#L46)
+### [ask](index.js#L49)
 
 Ask a question only if the answer is not stored.
 
@@ -46,6 +41,16 @@ Ask a question only if the answer is not stored.
 * `question` **{String}**: Key of the question in the questions cache to ask.
 * `options` **{Object}**: Options to control re-initializing the answer or forcing the question.
 * `cb` **{Function}**: Callback function with the `err` and `answer` parameters.
+
+**Example**
+
+```js
+ask('username', function (err, answer) {
+  if (err) return console.error(err);
+  console.log(answer);
+  //=> doowb
+});
+```
 
 ## Related projects
 

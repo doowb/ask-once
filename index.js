@@ -16,11 +16,6 @@ var assert = require('assert');
  *
  * ```js
  * var ask = require('ask-once')(questions, store);
- * ask('username', function (err, answer) {
- *   if (err) return console.error(err);
- *   console.log(answer);
- *   //=> doowb
- * });
  * ```
  *
  * @param {Object} `questions` Pass your instance of [question-cache] on the `questions` parameter.
@@ -35,6 +30,14 @@ function askOnce(questions, store) {
 
   /**
    * Ask a question only if the answer is not stored.
+   *
+   * ```js
+   * ask('username', function (err, answer) {
+   *   if (err) return console.error(err);
+   *   console.log(answer);
+   *   //=> doowb
+   * });
+   * ```
    *
    * @param  {String} `question` Key of the question in the questions cache to ask.
    * @param  {Object} `options` Options to control re-initializing the answer or forcing the question.
