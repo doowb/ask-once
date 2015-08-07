@@ -40,6 +40,7 @@ function askOnce(questions, store) {
    * @param  {Object} `options` Options to control re-initializing the answer or forcing the question.
    * @param  {Function} `cb` Callback function with the `err` and `answer` parameters.
    * @api public
+   * @name  ask
    */
 
   return function ask (question, options, cb) {
@@ -60,7 +61,22 @@ function askOnce(questions, store) {
     // if no answer in the store or if `force: true`
     // ask the question
     if (typeof answer === 'undefined' || options.force === true) {
-      return questions.ask(question, cb);
+
+      // reset the default to the last answer the user gave
+      if (options.force === true) {
+        var q = questions.get(question);
+        q.default = answer;
+      }
+
+      // ask the question
+      return questions.ask(question, function (err, answers) {
+        if (err) return cb(err);
+        answer = answers[question];
+
+        // save answer to store
+        store.set(question, answer);
+        cb(null, answer);
+      });
     }
 
     // otherwise, return the stored answer

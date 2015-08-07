@@ -20,7 +20,11 @@
     "test": "mocha"
   },
   "devDependencies": {
-    "mocha": "*"
+    "data-store": "^0.8.1",
+    "inquirer": "^0.9.0",
+    "minimist": "^1.1.3",
+    "mocha": "*",
+    "question-cache": "^0.1.3"
   },
   "verb": {
     "related": {

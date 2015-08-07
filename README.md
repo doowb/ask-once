@@ -1,11 +1,11 @@
-# ask-once [![NPM version](https://badge.fury.io/js/ask-once.svg)](http://badge.fury.io/js/ask-once)  [![Build Status](https://travis-ci.org/doowb/ask-once.svg)](https://travis-ci.org/doowb/ask-once) 
+# ask-once [![NPM version](https://badge.fury.io/js/ask-once.svg)](http://badge.fury.io/js/ask-once)  [![Build Status](https://travis-ci.org/doowb/ask-once.svg)](https://travis-ci.org/doowb/ask-once)
 
 > Only ask a question one time and store the answer.
 
-## Install with [npm](npmjs.org)
+Install with [npm](https://www.npmjs.com/)
 
-```bash
-npm i ask-once --save
+```sh
+$ npm i ask-once --save
 ```
 
 ## Usage
@@ -15,35 +15,68 @@ var askOnce = require('ask-once');
 ```
 
 ## API
-<!-- add a path or glob pattern for files with code comments to use for docs  -->
-{%= apidocs("index.js") %}
 
-## Related projects
-<!-- add an array of related projects, then un-escape the helper -->
-{%= related([]) %}  
+### [askOnce](index.js#L32)
 
-## Running tests
-Install dev dependencies.
+Create a question asking function that only asks a question if the answer is not found in the store or options force the question.
 
-```bash
-npm i -d && npm test
+**Params**
+
+* `questions` **{Object}**: Pass your instance of [question-cache] on the `questions` parameter.
+* `store` **{Object}**: Pass your instance of [data-store] on the `store` parameter.
+* `returns` **{Function}**: Function to use when asking questions.
+
+**Example**
+
+```js
+var ask = require('ask-once')(questions, store);
+ask('username', function (err, answer) {
+  if (err) return console.error(err);
+  console.log(answer);
+  //=> doowb
+});
 ```
 
+### [ask](index.js#L46)
+
+Ask a question only if the answer is not stored.
+
+**Params**
+
+* `question` **{String}**: Key of the question in the questions cache to ask.
+* `options` **{Object}**: Options to control re-initializing the answer or forcing the question.
+* `cb` **{Function}**: Callback function with the `err` and `answer` parameters.
+
+## Related projects
+
+* [data-store](https://github.com/jonschlinkert/data-store): Easily get, set and persist config data.
+* [inquirer](https://github.com/sboudrias/Inquirer.js#readme): A collection of common interactive command line user interfaces.
+* [question-cache](https://github.com/jonschlinkert/question-cache): A tiny wrapper around inquirer that makes it easy to create and selectively reuse questions.… [more](https://github.com/jonschlinkert/question-cache)
+* [question-helper](https://github.com/doowb/question-helper): Template helper that asks a question in the command line and resolves the template with… [more](https://github.com/doowb/question-helper)
+
+## Running tests
+
+Install dev dependencies:
+
+```sh
+$ npm i -d && npm test
+```
 
 ## Contributing
-Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://github.com/doowb/ask-once/issues)
 
+Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://github.com/doowb/ask-once/issues/new)
 
 ## Author
 
 **Brian Woodward**
- 
+
 + [github/doowb](https://github.com/doowb)
-+ [twitter/doowb](http://twitter.com/doowb) 
++ [twitter/doowb](http://twitter.com/doowb)
 
 ## License
+
 Copyright © 2015 Brian Woodward
-Released under the MIT license
+Released under the MIT license.
 
 ***
 
