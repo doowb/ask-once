@@ -17,6 +17,6 @@ describe('ask-once', function () {
 
   it('should create a new ask function', function () {
     var ask = require('./')(questions, store);
-    console.log(ask);
+    assert.equal(typeof ask, 'function');
   });
 });
