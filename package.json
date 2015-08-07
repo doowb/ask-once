@@ -21,5 +21,15 @@
   },
   "devDependencies": {
     "mocha": "*"
+  },
+  "verb": {
+    "related": {
+      "list": [
+        "question-cache",
+        "question-helper",
+        "inquirer",
+        "data-store"
+      ]
+    }
   }
 }
