@@ -12,14 +12,12 @@ var questions = new Questions({
   inquirer: inquirer
 });
 
-questions.set('username', {
-  type: 'input',
-  message: 'What\' your username?',
-  default: 'undefined'
-});
+questions
+  .set('username', 'What is your username?')
+  .set('name.first', 'First name?')
+  .set('name.last', 'Last name?');
 
-
-var ask = require('./')(questions, store);
+var ask = require('..')(questions, store);
 
 /*
  * Provide options at the commandline
@@ -27,10 +25,13 @@ var ask = require('./')(questions, store);
  *  - [f]orce => force asking the question
  */
 
-var options = {
-  init: argv.i || argv.init,
-  force: argv.f || argv.force
-};
+var options = {};
+if (argv.i || argv.init) {
+  options.init = true;
+}
+if (argv.f || argv.force) {
+  options.force = true;
+}
 
 ask('username', options, function (err, answer) {
   if (err) return console.error(err);
