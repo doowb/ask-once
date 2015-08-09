@@ -8,16 +8,13 @@
 'use strict';
 
 var assert = require('assert');
+var set = require('set-value');
 
 /**
- * Create a question asking function that only asks a question
- * if the answer is not found in the store or options force
- * the question.
+ * Returns a question-asking function that only asks a question
+ * if the answer is not already stored.
  *
- * ```js
- * var ask = require('ask-once')(questions, store);
- * ```
- *
+ * @name  askOnce
  * @param {Object} `questions` Pass your instance of [question-cache] on the `questions` parameter.
  * @param {Object} `store` Pass your instance of [data-store] on the `store` parameter.
  * @return {Function} Function to use when asking questions.
@@ -28,63 +25,79 @@ function askOnce(questions, store) {
   assert(typeof questions === 'object', 'Expected `questions` to be an instance of [question-cache] but got ' + (typeof questions));
   assert(typeof store === 'object', 'Expected `store` to be an instance of [data-store] but got ' + (typeof store));
 
+
   /**
    * Ask a question only if the answer is not stored.
    *
-   * ```js
-   * ask('username', function (err, answer) {
-   *   if (err) return console.error(err);
-   *   console.log(answer);
-   *   //=> doowb
-   * });
-   * ```
-   *
+   * @name  ask
    * @param  {String} `question` Key of the question in the questions cache to ask.
    * @param  {Object} `options` Options to control re-initializing the answer or forcing the question.
    * @param  {Function} `cb` Callback function with the `err` and `answer` parameters.
    * @api public
-   * @name  ask
    */
 
-  return function ask (question, options, cb) {
+  return function ask (key, options, cb) {
     if (typeof options === 'function') {
       cb = options;
       options || {}
     }
+
     options = options || {};
+    var answer, previousAnswer;
 
-    // `init: true` clear the answer from the store
     if (options.init === true) {
-      store.del(question);
+      previousAnswer = store.get(key);
+      // delete the store
+      store.del({force: true});
+    } else if (options.force === true) {
+      previousAnswer = store.get(key);
+      // delete the last answer
+      store.del(key);
+    } else {
+      // check to see if the answer is in the store
+      answer = store.get(key);
     }
 
-    // check to see if the answer is in the store
-    var answer = store.get(question);
-
-    // if no answer in the store or if `force: true`
-    // ask the question
-    if (typeof answer === 'undefined' || options.force === true) {
-
-      // reset the default to the last answer the user gave
-      if (options.force === true) {
-        var q = questions.get(question);
-        q.default = answer;
-      }
-
-      // ask the question
-      return questions.ask(question, function (err, answers) {
-        if (err) return cb(err);
-        answer = answers[question];
-
-        // save answer to store
-        store.set(question, answer);
-        cb(null, answer);
-      });
+    // if an answer (still) exists, return it
+    if (typeof answer !== 'undefined') {
+      return cb(null, answer);
     }
 
-    // otherwise, return the stored answer
-    cb(null, answer);
+    // override the default answer with the prev answer
+    if (previousAnswer && questions.has(key)) {
+      defaults(key, previousAnswer, questions.get(key));
+    }
+
+    questions.ask(key, function (err, answers) {
+      if (err) return cb(err);
+
+      // save answer to store
+      store.set(answers);
+      cb(null, answers);
+    });
   };
+}
+
+/**
+ * Update the `default` property of the given question or questions
+ * to be the previously stored value - if one exists.
+ *
+ * @param  {String} `prop` Question key, may use dot notation.
+ * @param  {any} `stored` Any stored value
+ * @param  {String} `questions` Question(s) object
+ */
+
+function defaults(prop, stored, questions) {
+  if (typeof questions !== 'object') return;
+  if (typeof stored === 'string') {
+    questions.default = stored;
+  } else {
+    for (var key in questions) {
+      if (key in questions && key in stored) {
+        questions[key].default = stored[key];
+      }
+    }
+  }
 }
 
 /**
