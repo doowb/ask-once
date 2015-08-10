@@ -14,6 +14,32 @@ $ npm i ask-once --save
 var askOnce = require('ask-once');
 ```
 
+## Examples
+
+First time the program is run, the user is prompted to answer a question:
+
+[![image](https://cloud.githubusercontent.com/assets/995160/9158076/78bf87e6-3ede-11e5-8bbc-dac8a55353c2.png)](https://www.npmjs.com/)
+
+Additional runs of the program will skip prompting the user:
+
+![image](https://cloud.githubusercontent.com/assets/995160/9158091/ec592b58-3ede-11e5-8f18-4fc4b1327d2b.png)
+
+Passing the `init` option will delete all the stored answers and prompt the user to answer the question again:
+
+![image](https://cloud.githubusercontent.com/assets/995160/9158111/22e24ff6-3edf-11e5-95c9-bc2314367557.png)
+
+Additional runs after clearing the stop will return the newly saved answer:
+
+![image](https://cloud.githubusercontent.com/assets/995160/9158120/43c16d60-3edf-11e5-8d85-a98b029fd743.png)
+
+Passing the `force` option will force the question to be asked:
+
+![image](https://cloud.githubusercontent.com/assets/995160/9158137/740bef0e-3edf-11e5-898d-d9ce72f28ad2.png)
+
+Additional runs after forcing the question, will return the newly saved answer:
+
+![image](https://cloud.githubusercontent.com/assets/995160/9158144/8fd63550-3edf-11e5-8daa-b19fa251bc66.png)
+
 ## API
 
 **Options**
@@ -23,7 +49,7 @@ To re-ask questions or reset the stored values:
 * `options.force`: will re-ask the given question or questions, regardless of whether or not previously stored values exists.
 * `options.init`: will **delete the entire store** and start over again.
 
-### [askOnce](index.js#L24)
+### [askOnce](index.js#L23)
 
 Returns a question-asking function that only asks a question
 if the answer is not already stored.
@@ -40,7 +66,7 @@ if the answer is not already stored.
 var ask = require('ask-once')(questions, store);
 ```
 
-### [ask](index.js#L39)
+### [ask](index.js#L38)
 
 Ask a question only if the answer is not stored.
 
