@@ -72,7 +72,7 @@ function askOnce(questions, store) {
 
       // save answer to store
       store.set(answers);
-      cb(null, answers);
+      cb(null, answers[key]);
     });
   };
 }
