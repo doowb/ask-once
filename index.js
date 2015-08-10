@@ -8,7 +8,6 @@
 'use strict';
 
 var assert = require('assert');
-var set = require('set-value');
 
 /**
  * Returns a question-asking function that only asks a question
