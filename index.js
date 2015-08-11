@@ -8,6 +8,7 @@
 'use strict';
 
 var assert = require('assert');
+var get = require('get-value');
 
 /**
  * Returns a question-asking function that only asks a question
@@ -72,7 +73,7 @@ function askOnce(questions, store) {
 
       // save answer to store
       store.set(answers);
-      cb(null, answers[key]);
+      cb(null, get(answers, key));
     });
   };
 }

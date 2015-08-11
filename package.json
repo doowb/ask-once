@@ -35,5 +35,8 @@
         "data-store"
       ]
     }
+  },
+  "dependencies": {
+    "get-value": "^1.1.5"
   }
 }
