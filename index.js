@@ -90,11 +90,15 @@ function askOnce(questions, store) {
 function defaults(prop, stored, questions) {
   if (typeof questions !== 'object') return;
   if (typeof stored === 'string') {
-    questions.default = stored;
+    if (questions.type !== 'password') {
+      questions.default = stored;
+    }
   } else {
     for (var key in questions) {
       if (key in questions && key in stored) {
-        questions[key].default = stored[key];
+        if (questions[key].type !== 'password') {
+          questions[key].default = stored[key];
+        }
       }
     }
   }
