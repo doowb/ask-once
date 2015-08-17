@@ -115,6 +115,14 @@ function defaults(prop, stored, questions) {
   }
 }
 
+/**
+ * Return the resolved name of the module that
+ * originates the call to `ask-once`.
+ *
+ * @param  {Object} `mod` module object to get parent from.
+ * @return {string} resolved name (filename or dirname)
+ */
+
 function moduleCaller(mod) {
   var parent = mod;
   while (parent.parent) {
@@ -126,6 +134,12 @@ function moduleCaller(mod) {
   }
   return name;
 }
+
+/**
+ * Get the file basename.
+ * @param  {String} `fp` filepath
+ * @return {String} basename
+ */
 
 function basename (fp) {
   return path.basename(fp, path.extname(fp));
