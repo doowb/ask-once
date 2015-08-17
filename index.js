@@ -8,7 +8,10 @@
 'use strict';
 
 var assert = require('assert');
-var get = require('get-value');
+var path = require('path');
+var lazy = require('lazy-cache')(require);
+lazy.DataStore = lazy('data-store');
+lazy.get = lazy('get-value');
 
 /**
  * Returns a question-asking function that only asks a question
@@ -23,8 +26,15 @@ var get = require('get-value');
 
 function askOnce(questions, store) {
   assert(typeof questions === 'object', 'Expected `questions` to be an instance of [question-cache] but got ' + (typeof questions));
-  assert(typeof store === 'object', 'Expected `store` to be an instance of [data-store] but got ' + (typeof store));
 
+  var DataStore = lazy.DataStore();
+  if (typeof store === 'string') {
+    store = new DataStore('ask.' + store);
+  }
+
+  if (typeof store === 'undefined') {
+    store = new DataStore('ask.' + moduleCaller(module));
+  }
 
   /**
    * Ask a question only if the answer is not stored.
@@ -70,6 +80,7 @@ function askOnce(questions, store) {
 
     questions.ask(key, function (err, answers) {
       if (err) return cb(err);
+      var get = lazy.get();
 
       // save answer to store
       store.set(answers);
@@ -102,6 +113,22 @@ function defaults(prop, stored, questions) {
       }
     }
   }
+}
+
+function moduleCaller(mod) {
+  var parent = mod;
+  while (parent.parent) {
+    parent = parent.parent;
+  }
+  var name = basename(path.resolve(parent.id));
+  if (name === 'index') {
+    name = path.dirname(path.resolve(parent.id));
+  }
+  return name;
+}
+
+function basename (fp) {
+  return path.basename(fp, path.extname(fp));
 }
 
 /**
