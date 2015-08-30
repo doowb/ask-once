@@ -7,33 +7,49 @@
 
 'use strict';
 
-var assert = require('assert');
 var path = require('path');
+var isObject = require('isobject');
+
+/**
+ * Lazily required module dependencies
+ */
+
 var lazy = require('lazy-cache')(require);
-lazy.DataStore = lazy('data-store');
-lazy.get = lazy('get-value');
+lazy('data-store', 'DataStore');
+lazy('get-value', 'get');
 
 /**
  * Returns a question-asking function that only asks a question
  * if the answer is not already stored.
  *
  * @name  askOnce
- * @param {Object} `questions` Pass your instance of [question-cache] on the `questions` parameter.
- * @param {Object} `store` Pass your instance of [data-store] on the `store` parameter.
+ * @param {Object} `questions` Pass your instance of [question-cache][] on the `questions` parameter.
+ * @param {Object} `store` Pass your instance of [data-store][] on the `store` parameter.
  * @return {Function} Function to use when asking questions.
  * @api public
  */
 
-function askOnce(questions, store) {
-  assert(typeof questions === 'object', 'Expected `questions` to be an instance of [question-cache] but got ' + (typeof questions));
+function askOnce (questions, store, options) {
+  if (!isObject(questions)) {
+    throw new Error('Expected `questions` to be an '
+      + 'instance of [question-cache] but got: ' + (typeof questions));
+  }
 
-  var DataStore = lazy.DataStore();
+  if (has(questions, 'questions')) {
+    options = questions;
+    questions = options.questions;
+    delete options.questions;
+  }
+  if (has(questions, 'store')) {
+    store = questions.store;
+  }
+
   if (typeof store === 'string') {
-    store = new DataStore('ask.' + store);
+    store = new lazy.DataStore('ask.' + store, options);
   }
 
   if (typeof store === 'undefined') {
-    store = new DataStore('ask.' + moduleCaller(module));
+    store = new lazy.DataStore('ask.' + moduleCaller(module), options);
   }
 
   /**
@@ -49,7 +65,7 @@ function askOnce(questions, store) {
   return function ask (key, options, cb) {
     if (typeof options === 'function') {
       cb = options;
-      options || {}
+      options = {};
     }
 
     options = options || {};
@@ -80,11 +96,10 @@ function askOnce(questions, store) {
 
     questions.ask(key, function (err, answers) {
       if (err) return cb(err);
-      var get = lazy.get();
 
       // save answer to store
       store.set(answers);
-      cb(null, get(answers, key));
+      cb(null, lazy.get(answers, key));
     });
   };
 }
@@ -133,6 +148,16 @@ function moduleCaller(mod) {
     name = path.dirname(path.resolve(parent.id));
   }
   return name;
+}
+
+/**
+ * Return true if `obj` has _own_ property `key`
+ * @param  {Object} `obj`
+ * @return {String} `key`
+ */
+
+function has (obj, key) {
+  return obj.hasOwnProperty(key);
 }
 
 /**

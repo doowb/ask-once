@@ -2,62 +2,82 @@
 
 > Only ask a question one time and store the answer.
 
+## Install
+
 Install with [npm](https://www.npmjs.com/)
 
 ```sh
-$ npm i ask-once --save
+$ npm i ask-once && question-cache --save
 ```
 
 ## Usage
 
+**1. Pass an instance of question-cache**
+
 ```js
-var askOnce = require('ask-once');
+var questions = require('question-cache')();
+var ask = require('ask-once')(questions);
 ```
 
-## Examples
+**2. Ask a question!**
 
-First time the program is run, the user is prompted to answer a question:
+```js
+ask('May I have your username?', function (err, answer) {
+  console.log(answer);
+});
+```
 
-[![image](https://cloud.githubusercontent.com/assets/995160/9158076/78bf87e6-3ede-11e5-8bbc-dac8a55353c2.png)](https://www.npmjs.com/)
+The user's answer is saved, and the question won't be asked again unless:
 
-Additional runs of the program will skip prompting the user:
+* `force: true` is passed on the options, or
+* the answer is deleted directly
 
-![image](https://cloud.githubusercontent.com/assets/995160/9158091/ec592b58-3ede-11e5-8f18-4fc4b1327d2b.png)
+## FAQ
 
-Passing the `init` option will delete all the stored answers and prompt the user to answer the question again:
+**Where are the answers stored?**
 
-![image](https://cloud.githubusercontent.com/assets/995160/9158111/22e24ff6-3edf-11e5-95c9-bc2314367557.png)
+The user's answers are saved on a global config store that is uniquely identified to the application using `ask-once`.
 
-Additional runs after clearing the stop will return the newly saved answer:
+**Can I change where answers are stored?**
 
-![image](https://cloud.githubusercontent.com/assets/995160/9158120/43c16d60-3edf-11e5-8d85-a98b029fd743.png)
+Yes, you can use the `cwd` option. Here's an example:
 
-Passing the `force` option will force the question to be asked:
+```js
+var questions = require('question-cache')();
+// pass your own instance of data-store, so you can use
+// whatever storage location you want
+var store = require('data-store');
 
-![image](https://cloud.githubusercontent.com/assets/995160/9158137/740bef0e-3edf-11e5-898d-d9ce72f28ad2.png)
+var ask = require('ask-once')({
+  store: store('foo', {cwd: 'bar'}),
+  questions: questions
+});
 
-Additional runs after forcing the question, will return the newly saved answer:
+ask('May I have your username?' function (err, answer) {
+  console.log(answer);
+});
+```
 
-![image](https://cloud.githubusercontent.com/assets/995160/9158144/8fd63550-3edf-11e5-8daa-b19fa251bc66.png)
+## Docs
 
-## API
+### options
 
-**Options**
-
-To re-ask questions or reset the stored values:
+> To re-ask questions or reset the stored values:
 
 * `options.force`: will re-ask the given question or questions, regardless of whether or not previously stored values exists.
 * `options.init`: will **delete the entire store** and start over again.
 
-### [askOnce](index.js#L27)
+### API
+
+### [askOnce](index.js#L32)
 
 Returns a question-asking function that only asks a question
 if the answer is not already stored.
 
 **Params**
 
-* `questions` **{Object}**: Pass your instance of [question-cache] on the `questions` parameter.
-* `store` **{Object}**: Pass your instance of [data-store] on the `store` parameter.
+* `questions` **{Object}**: Pass your instance of [question-cache][] on the `questions` parameter.
+* `store` **{Object}**: Pass your instance of [data-store][] on the `store` parameter.
 * `returns` **{Function}**: Function to use when asking questions.
 
 **Example**
@@ -66,7 +86,7 @@ if the answer is not already stored.
 var ask = require('ask-once')(questions, store);
 ```
 
-### [ask](index.js#L49)
+### [ask](index.js#L65)
 
 Ask a question only if the answer is not stored.
 
@@ -86,12 +106,38 @@ ask('username', function (err, answer) {
 });
 ```
 
+## Examples
+
+First time the program is run, the user is prompted to answer a question:
+
+[![image](https://cloud.githubusercontent.com/assets/995160/9158076/78bf87e6-3ede-11e5-8bbc-dac8a55353c2.png)](https://www.npmjs.com/)
+
+Additional runs of the program will skip prompting the user:
+
+[![image](https://cloud.githubusercontent.com/assets/995160/9158091/ec592b58-3ede-11e5-8f18-4fc4b1327d2b.png)](index.js#L32)
+
+Passing the `init` option will delete all the stored answers and prompt the user to answer the question again:
+
+[![image](https://cloud.githubusercontent.com/assets/995160/9158111/22e24ff6-3edf-11e5-95c9-bc2314367557.png)](index.js#L65)
+
+Additional runs after clearing the stop will return the newly saved answer:
+
+![image](https://cloud.githubusercontent.com/assets/995160/9158120/43c16d60-3edf-11e5-8d85-a98b029fd743.png)
+
+Passing the `force` option will force the question to be asked:
+
+![image](https://cloud.githubusercontent.com/assets/995160/9158137/740bef0e-3edf-11e5-898d-d9ce72f28ad2.png)
+
+Additional runs after forcing the question, will return the newly saved answer:
+
+![image](https://cloud.githubusercontent.com/assets/995160/9158144/8fd63550-3edf-11e5-8daa-b19fa251bc66.png)
+
 ## Related projects
 
-* [data-store](https://github.com/jonschlinkert/data-store): Easily get, set and persist config data.
-* [inquirer](https://github.com/sboudrias/Inquirer.js#readme): A collection of common interactive command line user interfaces.
-* [question-cache](https://github.com/jonschlinkert/question-cache): A wrapper around inquirer that makes it easy to create and selectively reuse questions.
-* [question-helper](https://github.com/doowb/question-helper): Template helper that asks a question in the command line and resolves the template with… [more](https://github.com/doowb/question-helper)
+* [data-store](https://www.npmjs.com/package/data-store): Easily get, set and persist config data. | [homepage](https://github.com/jonschlinkert/data-store)
+* [inquirer](https://www.npmjs.com/package/inquirer): A collection of common interactive command line user interfaces. | [homepage](https://github.com/sboudrias/Inquirer.js)
+* [question-cache](https://www.npmjs.com/package/question-cache): A wrapper around inquirer that makes it easy to create and selectively reuse questions. | [homepage](https://github.com/jonschlinkert/question-cache)
+* [question-helper](https://www.npmjs.com/package/question-helper): Template helper that asks a question in the command line and resolves the template with… [more](https://www.npmjs.com/package/question-helper) | [homepage](https://github.com/doowb/question-helper)
 
 ## Running tests
 
@@ -103,7 +149,7 @@ $ npm i -d && npm test
 
 ## Contributing
 
-Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://github.com/doowb/ask-once/issues/new)
+Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://github.com/doowb/ask-once/issues/new).
 
 ## Author
 
@@ -119,4 +165,4 @@ Released under the MIT license.
 
 ***
 
-_This file was generated by [verb-cli](https://github.com/assemble/verb-cli) on August 17, 2015._
+_This file was generated by [verb-cli](https://github.com/assemble/verb-cli) on August 30, 2015._

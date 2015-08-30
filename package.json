@@ -21,9 +21,9 @@
   },
   "devDependencies": {
     "inquirer": "^0.9.0",
-    "minimist": "^1.1.3",
+    "minimist": "^1.2.0",
     "mocha": "*",
-    "question-cache": "^0.2.1"
+    "question-cache": "^0.3.0"
   },
   "verb": {
     "related": {
@@ -36,8 +36,9 @@
     }
   },
   "dependencies": {
-    "data-store": "^0.8.1",
+    "data-store": "^0.9.0",
     "get-value": "^1.1.5",
-    "lazy-cache": "^0.1.0"
+    "isobject": "^2.0.0",
+    "lazy-cache": "^0.2.3"
   }
 }

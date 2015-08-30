@@ -1,28 +1,28 @@
 'use strict';
 
 var path = require('path');
-var questions = require('question-cache')();
+var cwd = path.join(__dirname, '.data');
 
-/*
- * Provide options at the commandline
- *  - [i]nit  => clear the answer from the store
- *  - [f]orce => force asking the question
- */
-
+// set flags/aliases on minimist
 var argv = require('minimist')(process.argv.slice(2), {
   alias: {force: 'f', init: 'i'}
 });
 
-var store = require('data-store')('ask-once-example', {
-  cwd: path.join(__dirname, '.data')
-});
+var questions = require('question-cache')();
+var dataStore = require('data-store')('ask-once-example', {cwd: cwd});
+var ask = require('..')({questions: questions, store: dataStore});
+
 
 questions
   .set('username', 'What is your username?')
   .set('name.first', 'First name?')
   .set('name.last', 'Last name?');
 
-var ask = require('..')(questions, store);
+/*
+ * Provide options at the commandline
+ *  - [i]nit => clear the answer from the store
+ *  - [f]orce => force asking the question
+ */
 
 ask('username', argv, function (err, answer) {
   if (err) return console.error(err);
