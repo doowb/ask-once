@@ -29,25 +29,27 @@ lazy('get-value', 'get');
  * @api public
  */
 
-function askOnce (questions, store) {
+function askOnce (questions, store, options) {
   if (!isObject(questions)) {
     throw new Error('Expected `questions` to be an '
       + 'instance of [question-cache] but got: ' + (typeof questions));
   }
 
   if (has(questions, 'questions')) {
-    questions = questions.questions;
+    options = questions;
+    questions = options.questions;
+    delete options.questions;
   }
   if (has(questions, 'store')) {
     store = questions.store;
   }
 
   if (typeof store === 'string') {
-    store = new lazy.DataStore('ask.' + store);
+    store = new lazy.DataStore('ask.' + store, options);
   }
 
   if (typeof store === 'undefined') {
-    store = new lazy.DataStore('ask.' + moduleCaller(module));
+    store = new lazy.DataStore('ask.' + moduleCaller(module), options);
   }
 
   /**
