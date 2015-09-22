@@ -86,7 +86,7 @@ if the answer is not already stored.
 var ask = require('ask-once')(questions, store);
 ```
 
-### [ask](index.js#L61)
+### [ask](index.js#L62)
 
 Ask a question only if the answer is not stored.
 
@@ -126,7 +126,7 @@ Additional runs after clearing the stop will return the newly saved answer:
 
 Passing the `force` option will force the question to be asked:
 
-[![image](https://cloud.githubusercontent.com/assets/995160/9158137/740bef0e-3edf-11e5-898d-d9ce72f28ad2.png)](index.js#L61)
+[![image](https://cloud.githubusercontent.com/assets/995160/9158137/740bef0e-3edf-11e5-898d-d9ce72f28ad2.png)](index.js#L62)
 
 Additional runs after forcing the question, will return the newly saved answer:
 
