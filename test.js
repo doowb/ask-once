@@ -8,6 +8,7 @@ var Questions = require('question-cache');
 var askOnce = require('./');
 var store, questions;
 
+
 describe('ask-once', function () {
   beforeEach(function () {
     questions = new Questions();

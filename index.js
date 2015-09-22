@@ -46,6 +46,7 @@ function askOnce (options) {
   }
 
   config.store = store;
+  config.questions = options.questions;
   config.data = options.data || {};
 
   /**
@@ -64,8 +65,9 @@ function askOnce (options) {
       opts = {};
     }
 
-    opts = lazy.merge({data: {}}, options, opts);
+    opts = utils.merge({data: {}}, config, opts);
     var answer, previousAnswer;
+    var questions = config.questions;
 
     function get(key) {
       return store.get(key) || opts.data[key] || opts[key];
@@ -103,7 +105,7 @@ function askOnce (options) {
       store.set(answers);
       cb(null, utils.get(answers, key));
     });
-  };
+  }
 
   ask.config = config;
   return ask;
@@ -153,16 +155,6 @@ function moduleCaller(mod) {
     name = path.dirname(path.resolve(parent.id));
   }
   return name;
-}
-
-/**
- * Return true if `obj` has _own_ property `key`
- * @param  {Object} `obj`
- * @return {String} `key`
- */
-
-function has (obj, key) {
-  return obj.hasOwnProperty(key);
 }
 
 /**
