@@ -22,7 +22,7 @@ questions
   .set('name.first', 'First name?')
   .set('name.last', 'Last name?');
 
-var ask = require('..')(questions, store);
+var ask = require('..')({questions: questions, store: store});
 
 ask('username', argv, function (err, answer) {
   if (err) return console.error(err);
