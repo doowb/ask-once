@@ -8,15 +8,7 @@
 'use strict';
 
 var path = require('path');
-var isObject = require('isobject');
-
-/**
- * Lazily required module dependencies
- */
-
-var lazy = require('lazy-cache')(require);
-lazy('data-store', 'DataStore');
-lazy('get-value', 'get');
+var utils = require('./utils');
 
 /**
  * Returns a question-asking function that only asks a question
@@ -29,28 +21,32 @@ lazy('get-value', 'get');
  * @api public
  */
 
-function askOnce (questions, store, options) {
-  if (!isObject(questions)) {
+function askOnce (options) {
+  options = options || {};
+
+  if (!utils.isObject(options.questions)) {
     throw new Error('Expected `questions` to be an '
       + 'instance of [question-cache] but got: ' + (typeof questions));
   }
 
-  if (has(questions, 'questions')) {
-    options = questions;
-    questions = options.questions;
-    delete options.questions;
-  }
-  if (has(questions, 'store')) {
-    store = questions.store;
+  var config = {};
+  var Store = utils.DataStore;
+  var store, name;
+
+  if (options.store && options.store instanceof Store) {
+    store = options.store;
+
+  } else if (typeof options.store === 'string') {
+    name = options.store;
+    delete options.store;
+    store = new Store('ask.' + name, options);
+
+  } else if (typeof store === 'undefined') {
+    store = new Store('ask.' + moduleCaller(module), options);
   }
 
-  if (typeof store === 'string') {
-    store = new lazy.DataStore('ask.' + store, options);
-  }
-
-  if (typeof store === 'undefined') {
-    store = new lazy.DataStore('ask.' + moduleCaller(module), options);
-  }
+  config.store = store;
+  config.data = options.data || {};
 
   /**
    * Ask a question only if the answer is not stored.
@@ -62,29 +58,35 @@ function askOnce (questions, store, options) {
    * @api public
    */
 
-  return function ask (key, options, cb) {
-    if (typeof options === 'function') {
-      cb = options;
-      options = {};
+  function ask (key, opts, cb) {
+    if (typeof opts === 'function') {
+      cb = opts;
+      opts = {};
     }
 
-    options = options || {};
+    opts = lazy.merge({data: {}}, options, opts);
     var answer, previousAnswer;
 
-    if (options.init === true) {
-      previousAnswer = store.get(key);
-      // delete the store
-      store.del({force: true});
-    } else if (options.force === true) {
-      previousAnswer = store.get(key);
-      // delete the last answer
-      store.del(key);
-    } else {
-      // check to see if the answer is in the store
-      answer = store.get(key);
+    function get(key) {
+      return store.get(key) || opts.data[key] || opts[key];
     }
 
-    // if an answer (still) exists, return it
+    if (opts.init === true) {
+      previousAnswer = get(key);
+      // delete the store
+      store.del({force: true});
+
+    } else if (opts.force === true) {
+      previousAnswer = get(key);
+      // delete the last answer
+      store.del(key);
+
+    } else {
+      // check to see if the answer is in the store
+      answer = get(key);
+    }
+
+    // if an answer (still) actually exists, just return it
     if (typeof answer !== 'undefined') {
       return cb(null, answer);
     }
@@ -99,9 +101,12 @@ function askOnce (questions, store, options) {
 
       // save answer to store
       store.set(answers);
-      cb(null, lazy.get(answers, key));
+      cb(null, utils.get(answers, key));
     });
   };
+
+  ask.config = config;
+  return ask;
 }
 
 /**
