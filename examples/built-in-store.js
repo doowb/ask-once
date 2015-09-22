@@ -1,6 +1,8 @@
 'use strict';
 
-var argv = require('minimist')(process.argv.slice(2));
+var argv = require('minimist')(process.argv.slice(2), {
+  alias: {force: 'f', init: 'i'}
+});
 
 var path = require('path');
 var inquirer = require('inquirer');
@@ -14,7 +16,7 @@ questions
   .set('name.first', 'First name?')
   .set('name.last', 'Last name?');
 
-var ask = require('..')(questions);
+var ask = require('..')({questions: questions});
 
 /*
  * Provide options at the commandline
@@ -22,15 +24,7 @@ var ask = require('..')(questions);
  *  - [f]orce => force asking the question
  */
 
-var options = {};
-if (argv.i || argv.init) {
-  options.init = true;
-}
-if (argv.f || argv.force) {
-  options.force = true;
-}
-
-ask('username', options, function (err, answer) {
+ask('username', argv, function (err, answer) {
   if (err) return console.error(err);
   console.log('You\'re username is', answer);
 });
