@@ -1,7 +1,7 @@
 {
   "name": "ask-once",
   "description": "Only ask a question one time and store the answer.",
-  "version": "0.4.1",
+  "version": "0.4.3",
   "homepage": "https://github.com/doowb/ask-once",
   "author": "Brian Woodward (https://github.com/doowb)",
   "repository": "doowb/ask-once",
