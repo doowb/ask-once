@@ -5,6 +5,7 @@
  */
 
 var lazy = require('lazy-cache')(require);
+lazy('mixin-deep', 'merge');
 lazy('data-store', 'DataStore');
 lazy('isobject', 'isObject');
 lazy('get-value', 'get');
