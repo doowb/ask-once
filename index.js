@@ -8,15 +8,7 @@
 'use strict';
 
 var path = require('path');
-var isObject = require('isobject');
-
-/**
- * Lazily required module dependencies
- */
-
-var lazy = require('lazy-cache')(require);
-lazy('data-store', 'DataStore');
-lazy('get-value', 'get');
+var utils = require('./utils');
 
 /**
  * Returns a question-asking function that only asks a question
@@ -30,7 +22,7 @@ lazy('get-value', 'get');
  */
 
 function askOnce (questions, store, options) {
-  if (!isObject(questions)) {
+  if (!utils.isObject(questions)) {
     throw new Error('Expected `questions` to be an '
       + 'instance of [question-cache] but got: ' + (typeof questions));
   }
@@ -40,16 +32,17 @@ function askOnce (questions, store, options) {
     questions = options.questions;
     delete options.questions;
   }
+
+  var Store = utils.DataStore;
+
   if (has(questions, 'store')) {
     store = questions.store;
-  }
 
-  if (typeof store === 'string') {
-    store = new lazy.DataStore('ask.' + store, options);
-  }
+  } else if (typeof store === 'string') {
+    store = new Store('ask.' + store, options);
 
-  if (typeof store === 'undefined') {
-    store = new lazy.DataStore('ask.' + moduleCaller(module), options);
+  } else if (typeof store === 'undefined') {
+    store = new Store('ask.' + moduleCaller(module), options);
   }
 
   /**
@@ -99,7 +92,7 @@ function askOnce (questions, store, options) {
 
       // save answer to store
       store.set(answers);
-      cb(null, lazy.get(answers, key));
+      cb(null, utils.get(answers, key));
     });
   };
 }
