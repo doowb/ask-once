@@ -40,7 +40,7 @@ The user's answers are saved on a global config store that is uniquely identifie
 
 **Can I change where answers are stored?**
 
-Yes, you can pass your own instance of [data-store][] with the `cwd` option set to whatever you want it to be. Here's an example:
+Yes, you can pass your own instance of [data-store](https://github.com/jonschlinkert/data-store) with the `cwd` option set to whatever you want it to be. Here's an example:
 
 ```js
 var questions = require('question-cache')();
@@ -77,7 +77,7 @@ if the answer is not already stored.
 **Params**
 
 * `questions` **{Object}**: Pass your instance of [question-cache][] on the `questions` parameter.
-* `store` **{Object}**: Pass your instance of [data-store][] on the `store` parameter.
+* `store` **{Object}**: Pass your instance of [data-store](https://github.com/jonschlinkert/data-store) on the `store` parameter.
 * `returns` **{Function}**: Function to use when asking questions.
 
 **Example**
@@ -114,19 +114,19 @@ First time the program is run, the user is prompted to answer a question:
 
 Additional runs of the program will skip prompting the user:
 
-[![image](https://cloud.githubusercontent.com/assets/995160/9158091/ec592b58-3ede-11e5-8f18-4fc4b1327d2b.png)](index.js#L24)
+[![image](https://cloud.githubusercontent.com/assets/995160/9158091/ec592b58-3ede-11e5-8f18-4fc4b1327d2b.png)](https://github.com/jonschlinkert/data-store)
 
 Passing the `init` option will delete all the stored answers and prompt the user to answer the question again:
 
-[![image](https://cloud.githubusercontent.com/assets/995160/9158111/22e24ff6-3edf-11e5-95c9-bc2314367557.png)](index.js#L61)
+[![image](https://cloud.githubusercontent.com/assets/995160/9158111/22e24ff6-3edf-11e5-95c9-bc2314367557.png)](index.js#L24)
 
 Additional runs after clearing the stop will return the newly saved answer:
 
-![image](https://cloud.githubusercontent.com/assets/995160/9158120/43c16d60-3edf-11e5-8d85-a98b029fd743.png)
+[![image](https://cloud.githubusercontent.com/assets/995160/9158120/43c16d60-3edf-11e5-8d85-a98b029fd743.png)](https://github.com/jonschlinkert/data-store)
 
 Passing the `force` option will force the question to be asked:
 
-![image](https://cloud.githubusercontent.com/assets/995160/9158137/740bef0e-3edf-11e5-898d-d9ce72f28ad2.png)
+[![image](https://cloud.githubusercontent.com/assets/995160/9158137/740bef0e-3edf-11e5-898d-d9ce72f28ad2.png)](index.js#L61)
 
 Additional runs after forcing the question, will return the newly saved answer:
 
