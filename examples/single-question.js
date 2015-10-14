@@ -24,7 +24,7 @@ questions
 
 var ask = require('..')({questions: questions, store: store});
 
-ask('username', argv, function (err, answer) {
+ask.once('name', argv, function (err, answer) {
   if (err) return console.error(err);
-  console.log('You\'re username is', answer);
+  console.log('You\'re name is', answer);
 });

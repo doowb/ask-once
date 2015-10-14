@@ -1,10 +1,10 @@
 'use strict';
 
+var path = require('path');
 var argv = require('minimist')(process.argv.slice(2), {
   alias: {force: 'f', init: 'i'}
 });
 
-var path = require('path');
 var inquirer = require('inquirer');
 var Questions = require('question-cache');
 var questions = new Questions({
@@ -24,7 +24,7 @@ var ask = require('..')({questions: questions, store: 'custom-store'});
  *  - [f]orce => force asking the question
  */
 
-ask('username', argv, function (err, answer) {
+ask.once('username', argv, function (err, answer) {
   if (err) return console.error(err);
   console.log('You\'re username is', answer);
 });

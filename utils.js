@@ -9,7 +9,7 @@ var fn = require;
 
 require = utils;
 require('mixin-deep', 'merge');
-require('data-store', 'DataStore');
+require('data-store', 'Store');
 require('isobject', 'isObject');
 require('get-value', 'get');
 require = fn;
