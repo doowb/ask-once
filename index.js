@@ -21,12 +21,9 @@ var utils = require('./utils');
  * @api public
  */
 
-function askOnce (options) {
-  options = options || {};
-
-  if (!utils.isObject(options.questions)) {
-    throw new Error('Expected `questions` to be an '
-      + 'instance of [question-cache] but got: ' + (typeof questions));
+function askOnce(options) {
+  if (!options || !utils.isObject(options.questions)) {
+    throw new Error('expected an instance of `question-cache`');
   }
 
   var config = {};
@@ -39,10 +36,10 @@ function askOnce (options) {
   } else if (typeof options.store === 'string') {
     name = options.store;
     delete options.store;
-    store = new Store('ask.' + name, options);
+    store = new Store(name, options);
 
-  } else if (typeof store === 'undefined') {
-    store = new Store('ask.' + moduleCaller(module), options);
+  } else {
+    store = new Store('ask-once.' + moduleCaller(module), options);
   }
 
   config.store = store;
@@ -70,7 +67,7 @@ function askOnce (options) {
     var questions = config.questions;
 
     function get(key) {
-      return store.get(key) || opts.data[key] || opts[key];
+      return opts.data[key] || opts[key] || store.get(key);
     }
 
     if (opts.init === true) {
@@ -97,6 +94,7 @@ function askOnce (options) {
     if (previousAnswer && questions.has(key)) {
       defaults(key, previousAnswer, questions.get(key));
     }
+    console.log(previousAnswer)
 
     questions.ask(key, function (err, answers) {
       if (err) return cb(err);
