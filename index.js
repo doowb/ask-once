@@ -12,130 +12,123 @@ var utils = require('./utils');
 
 /**
  * Returns a question-asking function that only asks a question
- * if the answer is not already stored.
+ * if the answer is not already stored, or if forced.
  *
- * @name  askOnce
- * @param {Object} `questions` Pass your instance of [question-cache][] on the `questions` parameter.
- * @param {Object} `store` Pass your instance of [data-store][] on the `store` parameter.
- * @return {Function} Function to use when asking questions.
+ * ```js
+ * var ask = new Ask({questions: questions});
+ * ```
+ *
+ * @param {Object} `options`
+ *   @param {Object} `options.questions` (required) Pass an instance of [question-cache][]
+ *   @param {Object} `options.store` (optional) Pass an instance of [data-store][]
  * @api public
  */
 
-function askOnce (options) {
-  options = options || {};
-
-  if (!utils.isObject(options.questions)) {
-    throw new Error('Expected `questions` to be an '
-      + 'instance of [question-cache] but got: ' + (typeof questions));
+function Ask(options) {
+  if (!(this instanceof Ask)) {
+    return new Ask(options);
   }
 
-  var config = {};
-  var Store = utils.DataStore;
-  var store, name;
-
-  if (options.store && options.store instanceof Store) {
-    store = options.store;
-
-  } else if (typeof options.store === 'string') {
-    name = options.store;
-    delete options.store;
-    store = new Store('ask.' + name, options);
-
-  } else if (typeof store === 'undefined') {
-    store = new Store('ask.' + moduleCaller(module), options);
+  if (!options || !options.questions) {
+    throw new Error('expected an instance of `question-cache`');
   }
 
-  config.store = store;
-  config.questions = options.questions;
-  config.data = options.data || {};
-
-  /**
-   * Ask a question only if the answer is not stored.
-   *
-   * @name  ask
-   * @param  {String} `question` Key of the question in the questions cache to ask.
-   * @param  {Object} `options` Options to control re-initializing the answer or forcing the question.
-   * @param  {Function} `cb` Callback function with the `err` and `answer` parameters.
-   * @api public
-   */
-
-  function ask (key, opts, cb) {
-    if (typeof opts === 'function') {
-      cb = opts;
-      opts = {};
-    }
-
-    opts = utils.merge({data: {}}, config, opts);
-    var answer, previousAnswer;
-    var questions = config.questions;
-
-    function get(key) {
-      return store.get(key) || opts.data[key] || opts[key];
-    }
-
-    if (opts.init === true) {
-      previousAnswer = get(key);
-      // delete the store
-      store.del({force: true});
-
-    } else if (opts.force === true) {
-      previousAnswer = get(key);
-      // delete the last answer
-      store.del(key);
-
-    } else {
-      // check to see if the answer is in the store
-      answer = get(key);
-    }
-
-    // if an answer (still) actually exists, just return it
-    if (typeof answer !== 'undefined') {
-      return cb(null, answer);
-    }
-
-    // override the default answer with the prev answer
-    if (previousAnswer && questions.has(key)) {
-      defaults(key, previousAnswer, questions.get(key));
-    }
-
-    questions.ask(key, function (err, answers) {
-      if (err) return cb(err);
-
-      // save answer to store
-      store.set(answers);
-      cb(null, utils.get(answers, key));
-    });
+  this.options = options || {};
+  if (typeof this.options.store === 'object') {
+    this.store = this.options.store;
+    delete this.options.store;
+  } else {
+    var name = moduleCaller(module);
+    this.store = new utils.Store('ask-once.' + name, this.options);
   }
-
-  ask.config = config;
-  return ask;
 }
 
 /**
- * Update the `default` property of the given question or questions
- * to be the previously stored value - if one exists.
+ * Ask a question only if the answer is not already stored. If
+ * the answer is passed on the options the question is bypassed
+ * and the answer is be returned.
  *
- * @param  {String} `prop` Question key, may use dot notation.
- * @param  {any} `stored` Any stored value
- * @param  {String} `questions` Question(s) object
+ * @param  {String} `question` Key of the question to ask.
+ * @param  {Object} `options` Answers or options to force re-asking questions.
+ * @param  {Function} `cb` Callback function with `err` and `answer`.
+ * @api public
  */
 
-function defaults(prop, stored, questions) {
-  if (typeof questions !== 'object') return;
+Ask.prototype.once = function (key, options, cb) {
+  if (typeof options === 'function') {
+    cb = options;
+    options = {};
+  }
+
+  if (typeof cb !== 'function') {
+    throw new TypeError('expected callback to be a function');
+  }
+
+  var opts = utils.merge({data: {}}, this.options, options);
+  this.questions = opts.questions;
+  var answer, prevAnswer;
+  var self = this;
+
+  function get(key) {
+    return opts[key] || opts.data[key] || self.store.get(key);
+  }
+
+  // delete the store
+  if (opts.init === true) {
+    prevAnswer = self.store.get(key);
+    this.store.data = {};
+    this.store.del({force: true});
+    delete opts.init;
+    return this.once(key, opts, cb);
+  }
+
+  // delete the previous answer
+  if (opts.force === true) {
+    prevAnswer = self.store.get(key);
+    this.store.del(key);
+    delete opts.force;
+    return this.once(key, opts, cb);
+  }
+
+  var answer = get(key);
+
+  // if an answer already exists, just return it
+  if (typeof answer !== 'undefined') {
+    return cb(null, answer);
+  }
+
+  // update the default answer to use the prev answer
+  if (prevAnswer && questions.has(key)) {
+    this.defaults(key, prevAnswer, questions.get(key));
+  }
+
+  questions.ask(key, function (err, answers) {
+    if (err) return cb(err);
+
+    // save answer to store
+    self.store.set(answers);
+    cb(null, utils.get(answers, key));
+  });
+};
+
+/**
+ * Determine defaults to used for the question.
+ */
+
+Ask.prototype.defaults = function(prop, stored, answer) {
+  if (typeof answer !== 'object') return;
   if (typeof stored === 'string') {
-    if (questions.type !== 'password') {
-      questions.default = stored;
+    if (answer.type !== 'password') {
+      answer.default = stored;
     }
   } else {
-    for (var key in questions) {
-      if (key in questions && key in stored) {
-        if (questions[key].type !== 'password') {
-          questions[key].default = stored[key];
-        }
+    for (var key in answer) {
+      if (key in stored && answer[key].type !== 'password') {
+        answer[key].default = stored[key];
       }
     }
   }
-}
+};
 
 /**
  * Return the resolved name of the module that
@@ -171,4 +164,4 @@ function basename (fp) {
  * Expose `askOnce`
  */
 
-module.exports = askOnce;
+module.exports = Ask;

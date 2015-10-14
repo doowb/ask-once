@@ -4,14 +4,18 @@
  * Lazily required module dependencies
  */
 
-var lazy = require('lazy-cache')(require);
-lazy('mixin-deep', 'merge');
-lazy('data-store', 'DataStore');
-lazy('isobject', 'isObject');
-lazy('get-value', 'get');
+var utils = require('lazy-cache')(require);
+var fn = require;
+
+require = utils;
+require('mixin-deep', 'merge');
+require('data-store', 'Store');
+require('isobject', 'isObject');
+require('get-value', 'get');
+require = fn;
 
 /**
  * Expose utils
  */
 
-module.exports = lazy;
+module.exports = utils;
