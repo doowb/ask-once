@@ -90,7 +90,7 @@ Ask.prototype.once = function (key, options, cb) {
     return this.once(key, opts, cb);
   }
 
-  var answer = get(key);
+  answer = get(key);
 
   // if an answer already exists, just return it
   if (typeof answer !== 'undefined') {
@@ -98,16 +98,17 @@ Ask.prototype.once = function (key, options, cb) {
   }
 
   // update the default answer to use the prev answer
-  if (prevAnswer && questions.has(key)) {
-    this.defaults(key, prevAnswer, questions.get(key));
+  if (prevAnswer && this.questions.has(key)) {
+    this.defaults(key, prevAnswer, this.questions.get(key));
   }
 
-  questions.ask(key, function (err, answers) {
+  this.questions.ask(key, function (err, answers) {
     if (err) return cb(err);
+    answer = utils.get(answers, key);
 
     // save answer to store
-    self.store.set(answers);
-    cb(null, utils.get(answers, key));
+    self.store.set(key, answer);
+    cb(null, answer);
   });
 };
 
