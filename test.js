@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * deps: mocha
+ */
+
 var path = require('path');
 var sinon = require('sinon');
 var assert = require('assert');
