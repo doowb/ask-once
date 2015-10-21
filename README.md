@@ -7,16 +7,13 @@
 Install with [npm](https://www.npmjs.com/)
 
 ```sh
-$ npm i ask-once && question-cache --save
+$ npm i ask-once --save
 ```
 
 ## Usage
 
-**1. Pass an instance of question-cache**
-
 ```js
-var questions = require('question-cache')();
-var ask = require('ask-once')({questions: questions});
+var ask = require('ask-once')();
 ```
 
 **2. Ask a question!**
@@ -40,17 +37,16 @@ The user's answers are saved on a global config store that is uniquely identifie
 
 **Can I change where answers are stored?**
 
-Yes, you can pass your own instance of [data-store](https://github.com/jonschlinkert/data-store) with the `cwd` option set to whatever you want it to be. Here's an example:
+Yes, you can pass the name of a [data-store](https://github.com/jonschlinkert/data-store) with the `cwd` option set to whatever you want it to be. Here's an example:
 
 ```js
-var questions = require('question-cache')();
-// pass your own instance of data-store, so you can use
+// pass the name of a data-store, so you can use
 // whatever storage location you want
-var store = require('data-store')('foo', {cwd: 'bar'});
-
 var ask = require('ask-once')({
-  questions: questions,
-  store: store
+  store: {
+    name: 'foo',
+    cwd: 'bar'
+  }
 });
 
 ask('May I have your username?' function (err, answer) {
