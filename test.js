@@ -1,26 +1,30 @@
 'use strict';
 
 var path = require('path');
+var sinon = require('sinon');
 var assert = require('assert');
 var Store = require('data-store');
 var Questions = require('question-cache');
+var utils = require('./utils');
 var Ask = require('./');
-var store, questions;
 var ask;
 
 
 describe('ask-once', function () {
-  beforeEach(function () {
-    questions = new Questions();
-    store = new Store('ask-question-tests', {
+  var options = {
+    store: {
+      name: 'ask-question-tests',
       cwd: path.join(__dirname, 'tmp', '.data')
-    });
+    }
+  };
 
-    ask = new Ask({questions: questions, store: store});
+  beforeEach(function () {
+    ask = new Ask(options);
   });
 
   after(function () {
-    store.del({force: true});
+    ask.del({force: true});
+    ask.previous.del({force: true});
   });
 
   it('should return an instance of Ask', function () {
@@ -28,15 +32,18 @@ describe('ask-once', function () {
   });
 
   it('should instantiate without new', function () {
-    var foo = Ask({questions: questions, store: store});
+    var foo = Ask(options);
     assert(foo instanceof Ask);
   });
 
-  it('should create a new ask function', function () {
+  it('should create a new ask instance with methods', function () {
     assert.equal(typeof ask.once, 'function');
+    assert.equal(typeof ask.get, 'function');
+    assert.equal(typeof ask.set, 'function');
+    assert.equal(typeof ask.del, 'function');
   });
 
-  it('should throw an error callback is not passed', function (done) {
+  it('should throw an error when callback is not passed', function (done) {
     try {
       ask.once();
       done(new Error('expected an error'));
@@ -48,101 +55,57 @@ describe('ask-once', function () {
     }
   });
 
-  it('should throw an error when no options are passed', function (done) {
-    try {
-      new Ask();
-      done(new Error('expected an error'));
-    } catch(err) {
-      assert(err);
-      assert(err.message);
-      assert(err.message === 'expected an instance of `question-cache`');
-      done();
-    }
-  });
-
-  it('should throw an error when `questions` is not passed', function (done) {
-    try {
-      new Ask({store: store});
-      done(new Error('expected an error'));
-    } catch(err) {
-      assert(err);
-      assert(err.message);
-      assert(err.message === 'expected an instance of `question-cache`');
-      done();
-    }
-  });
-
   it('should use the name of the store passed on the options', function () {
-    ask = new Ask({
-      questions: questions,
-      store: new Store('a-b-c')
-    });
+    var ask = new Ask(utils.extend({}, options, {store: {name: 'a-b-c'}}));
 
-    assert(ask.store.name);
-    assert(ask.store.name === 'a-b-c');
-    store.del({force: true});
+    assert(ask.answers.name);
+    assert(ask.answers.name === 'a-b-c');
+    ask.del({force: true});
   });
 
-  it('should prepend `ask-once` to module caller when store is undefined', function () {
-    ask = new Ask({questions: questions});
-    assert(ask.store.name);
-    assert(ask.store.name === 'ask-once.ask-once');
-    store.del({force: true});
+  it('should prepend `ask-once` to project name when store options are undefined', function () {
+    var ask = new Ask();
+    assert(ask.answers.name);
+    assert(ask.answers.name === 'ask-once.ask-once');
+    ask.del({force: true});
   });
 
   it('should expose the options object on ask', function () {
-    ask = new Ask({
-      questions: questions,
-      store: store,
-      data: {foo: 'bar'}
-    });
+    var ask = new Ask({data: {foo: 'bar'}});
 
     assert.equal(ask.hasOwnProperty('options'), true);
     assert.equal(ask.options.data.foo, 'bar');
+    ask.del({force: true});
   });
 
   it('should use values from the `data` object', function (done) {
-    ask = new Ask({
-      questions: questions,
-      store: store,
-      data: {aaa: 'bbb'}
-    });
+    var ask = new Ask({data: {aaa: 'bbb'}});
 
     ask.once('aaa', function (err, answer) {
       assert(!err);
       assert(answer);
       assert(answer === 'bbb');
+      ask.del({force: true});
       done();
     });
   });
 
   it('should delete the store when `options.init` is defined', function (done) {
-    store.set('a', 'b');
-    store.set('c', 'd');
-
-    ask = new Ask({
-      questions: questions,
-      store: store,
-    });
-
+    ask.set('a', 'b');
+    ask.set('c', 'd');
     ask.once('aaa', {init: true, data: {aaa: 'bbb'}}, function (err, answer) {
       assert(!err);
       assert(answer);
       assert(answer === 'bbb');
-      assert(!store.has('a'));
-      assert(!store.has('c'));
+      assert(!ask.answers.has('a'));
+      assert(!ask.answers.has('c'));
       done();
     });
   });
 
   it('should re-ask when `options.force` is defined', function (done) {
-    store.set('a', 'b');
-    store.set('c', 'd');
-
-    ask = new Ask({
-      questions: questions,
-      store: store,
-    });
+    ask.set('a', 'b');
+    ask.set('c', 'd');
 
     ask.once('a', {force: true, data: {a: 'bbb'}}, function (err, answer) {
       assert(!err);
@@ -153,11 +116,6 @@ describe('ask-once', function () {
   });
 
   it('should use values from the options', function (done) {
-    ask = new Ask({
-      questions: questions,
-      store: store
-    });
-
     ask.once('ccc', {ccc: 'ddd'}, function (err, answer) {
       assert(!err);
       assert(answer);
@@ -167,36 +125,80 @@ describe('ask-once', function () {
   });
 
   it('should use stored values', function (done) {
-    ask = new Ask({
-      questions: questions,
-      store: store
-    });
-
-    store.set('eee', 'fff');
-
+    ask.set('eee', 'fff');
     ask.once('eee', function (err, answer) {
       assert(!err);
       assert(answer);
       assert(answer === 'fff');
-      store.del('eee');
       done();
     });
   });
 
   it('should use options values over stored values', function (done) {
-    ask = new Ask({
-      questions: questions,
-      store: store
-    });
-
-    store.set('eee', 'fff');
-
+    ask.set('eee', 'fff');
     ask.once('eee', {eee: 'zzz'}, function (err, answer) {
       assert(!err);
       assert(answer);
       assert(answer === 'zzz');
-      store.del('eee');
       done();
+    });
+  });
+
+  describe('stubbed questions.ask', function () {
+    var stub = function (fn) {
+      sinon.stub(ask.questions, 'ask', fn);
+    }
+    afterEach(function () {
+      ask.questions.ask.restore();
+    });
+
+    it('should handle an error returned in the callback', function (done) {
+      stub(function (question, cb) {
+        return cb(new Error('Fake Error'));
+      });
+
+      ask.once('foo', function (err, answer) {
+        assert(err);
+        assert(!answer);
+        done();
+      });
+    });
+
+    it('should update the default on the question to ask with the previous answer', function (done) {
+      stub(function (question, cb) {
+        return cb(null, {bar: 'boop'});
+      });
+
+      ask.set('bar', 'baz');
+      ask.questions.set('bar');
+      assert.deepEqual(ask.questions.get('bar'), { message: 'bar?', type: 'input', name: 'bar' });
+      ask.once('bar', {force: true}, function (err, answer) {
+        assert(!err);
+        assert(answer);
+        assert(answer === 'boop');
+        assert.deepEqual(ask.questions.get('bar'), { message: 'bar?', default: 'baz', type: 'input', name: 'bar' });
+        done();
+      });
+    });
+
+    it('should use a previously stored value when init is passed on a previous question', function (done) {
+      stub(function (question, cb) {
+        return cb(null, {bar: 'boop'});
+      });
+
+      ask.set('foo', 'bar');
+      ask.set('bar', 'baz');
+      ask.once('foo', {init: true, foo: 'beep'}, function (err, answer) {
+        assert(!err);
+        assert(answer);
+        assert(answer === 'beep');
+        ask.once('bar', function (err, answer) {
+          assert(!err);
+          assert(answer);
+          assert(answer === 'boop');
+          done();
+        });
+      });
     });
   });
 });

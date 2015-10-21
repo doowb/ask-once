@@ -19,8 +19,8 @@ var utils = require('./utils');
  * ```
  *
  * @param {Object} `options`
- *   @param {Object} `options.questions` (required) Pass an instance of [question-cache][]
- *   @param {Object} `options.store` (optional) Pass an instance of [data-store][]
+ *   @param {Object} `options.questions` (optional) Options to be passed to [question-cache][]
+ *   @param {Object} `options.store` (optional) Options to be passed to [data-store][]
  * @api public
  */
 
@@ -29,19 +29,36 @@ function Ask(options) {
     return new Ask(options);
   }
 
-  if (!options || !options.questions) {
-    throw new Error('expected an instance of `question-cache`');
-  }
-
   this.options = options || {};
-  if (typeof this.options.store === 'object') {
-    this.store = this.options.store;
-    delete this.options.store;
-  } else {
-    var name = moduleCaller(module);
-    this.store = new utils.Store('ask-once.' + name, this.options);
-  }
+  this.questions = utils.questions(this.options.questions);
+
+  var name = this.options.store && this.options.store.name;
+  name = name || (utils.project() + '.ask-once');
+
+  this.answers = utils.store(name, this.options.store);
+  this.previous = utils.store(this.answers.name + '.previous', this.answers.options);
+
+  Object.defineProperty(this, 'data', {
+    enumerable: true,
+    get: function () {
+      return this.answers.data;
+    }
+  });
 }
+
+Ask.prototype.set = function() {
+  this.answers.set.apply(this.answers, arguments);
+  return this;
+};
+
+Ask.prototype.get = function() {
+  return this.answers.get.apply(this.answers, arguments);
+};
+
+Ask.prototype.del = function() {
+  this.answers.del.apply(this.answers, arguments);
+  return this;
+};
 
 /**
  * Ask a question only if the answer is not already stored. If
@@ -64,30 +81,22 @@ Ask.prototype.once = function (key, options, cb) {
     throw new TypeError('expected callback to be a function');
   }
 
-  var opts = utils.merge({data: {}}, this.options, options);
-  this.questions = opts.questions;
+  var opts = utils.extend({data: {}}, this.options, options);
   var answer, prevAnswer;
   var self = this;
 
   function get(key) {
-    return opts[key] || opts.data[key] || self.store.get(key);
+    return opts[key] || opts.data[key] || self.get(key);
   }
 
-  // delete the store
+  // delete the stored answers
   if (opts.init === true) {
-    prevAnswer = self.store.get(key);
-    this.store.data = {};
-    this.store.del({force: true});
-    delete opts.init;
-    return this.once(key, opts, cb);
+    prevAnswer = this.handleInit(key);
   }
 
   // delete the previous answer
   if (opts.force === true) {
-    prevAnswer = self.store.get(key);
-    this.store.del(key);
-    delete opts.force;
-    return this.once(key, opts, cb);
+    prevAnswer = this.handleForce(key);
   }
 
   answer = get(key);
@@ -97,21 +106,47 @@ Ask.prototype.once = function (key, options, cb) {
     return cb(null, answer);
   }
 
-  // update the default answer to use the prev answer
-  if (prevAnswer && this.questions.has(key)) {
-    this.defaults(key, prevAnswer, this.questions.get(key));
-  }
-
-  this.questions.ask(key, function (err, answers) {
+  var question = this.getQuestion(key, prevAnswer);
+  this.questions.ask(question, function (err, answers) {
     if (err) return cb(err);
     answer = utils.get(answers, key);
 
     // save answer to store
-    self.store.set(key, answer);
+    self.answers.set(key, answer);
     cb(null, answer);
   });
 };
 
+Ask.prototype.getQuestion = function(key, prevAnswer) {
+  prevAnswer = prevAnswer || this.previous.get(key);
+
+  // update the default answer to use the prev answer
+  if (prevAnswer && this.questions.has(key)) {
+    this.defaults(key, prevAnswer, this.questions.get(key));
+  } else if (prevAnswer) {
+    return {
+      name: key,
+      default: prevAnswer
+    };
+  }
+  return key;
+};
+
+
+Ask.prototype.handleInit = function(key) {
+  var prevAnswer = this.get(key) || this.previous.get(key);
+  this.previous.set(this.data);
+  this.answers.data = {};
+  this.del({force: true});
+  return prevAnswer;
+};
+
+Ask.prototype.handleForce = function(key) {
+  var prevAnswer = this.get(key) || this.previous.get(key);
+  this.previous.set(key, prevAnswer);
+  this.del(key);
+  return prevAnswer;
+};
 /**
  * Determine defaults to used for the question.
  */
@@ -130,36 +165,6 @@ Ask.prototype.defaults = function(prop, stored, answer) {
     }
   }
 };
-
-/**
- * Return the resolved name of the module that
- * originates the call to `ask-once`.
- *
- * @param  {Object} `mod` module object to get parent from.
- * @return {string} resolved name (filename or dirname)
- */
-
-function moduleCaller(mod) {
-  var parent = mod;
-  while (parent.parent) {
-    parent = parent.parent;
-  }
-  var name = basename(path.resolve(parent.id));
-  if (name === 'index') {
-    name = path.dirname(path.resolve(parent.id));
-  }
-  return name;
-}
-
-/**
- * Get the file basename.
- * @param  {String} `fp` filepath
- * @return {String} basename
- */
-
-function basename (fp) {
-  return path.basename(fp, path.extname(fp));
-}
 
 /**
  * Expose `askOnce`

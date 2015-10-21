@@ -8,9 +8,11 @@ var utils = require('lazy-cache')(require);
 var fn = require;
 
 require = utils;
-require('mixin-deep', 'merge');
-require('data-store', 'Store');
+require('question-cache', 'questions');
+require('extend-shallow', 'extend');
+require('project-name', 'project');
 require('isobject', 'isObject');
+require('data-store', 'store');
 require('get-value', 'get');
 require = fn;
 
