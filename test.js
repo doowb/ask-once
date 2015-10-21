@@ -144,6 +144,10 @@ describe('ask-once', function () {
     });
   });
 
+  it('should return from `defaults` when answer is not an object', function () {
+    assert(typeof ask.defaults('foo', 'bar', 'baz') === 'undefined');
+  });
+
   describe('stubbed questions.ask', function () {
     var stub = function (fn) {
       sinon.stub(ask.questions, 'ask', fn);
@@ -181,6 +185,55 @@ describe('ask-once', function () {
       });
     });
 
+    it('should update the default on the question to ask with the previous answer when question is a password', function (done) {
+      stub(function (question, cb) {
+        return cb(null, {bar: 'boop'});
+      });
+
+      ask.set('bar', 'baz');
+      ask.questions.set('bar', {type: 'password'});
+      assert.deepEqual(ask.questions.get('bar'), { type: 'password', name: 'bar' });
+      ask.once('bar', {force: true}, function (err, answer) {
+        assert(!err);
+        assert(answer);
+        assert(answer === 'boop');
+        assert.deepEqual(ask.questions.get('bar'), { type: 'password', name: 'bar' });
+        done();
+      });
+    });
+
+    it('should update the default on the question to ask with the previous answer when question is an object', function (done) {
+      stub(function (question, cb) {
+        return cb(null, {bar: {boop: 'beep'}});
+      });
+
+      ask.set('bar', {boop: 'baz'});
+      ask.questions.set('bar');
+      ask.questions.set('bar.boop');
+
+      var expected = {
+        message: 'bar?',
+        type: 'input',
+        name: 'bar',
+        boop: {
+          message: 'bar.boop?',
+          name: 'bar.boop',
+          type: 'input'
+        }
+      };
+
+      assert.deepEqual(ask.questions.get('bar'), expected);
+
+      ask.once('bar', {force: true}, function (err, answer) {
+        assert(!err);
+        assert(answer);
+        assert.deepEqual(answer, {boop: 'beep'});
+        expected.boop.default = 'baz';
+        assert.deepEqual(ask.questions.get('bar'), expected);
+        done();
+      });
+    });
+
     it('should use a previously stored value when init is passed on a previous question', function (done) {
       stub(function (question, cb) {
         return cb(null, {bar: 'boop'});
@@ -193,6 +246,26 @@ describe('ask-once', function () {
         assert(answer);
         assert(answer === 'beep');
         ask.once('bar', function (err, answer) {
+          assert(!err);
+          assert(answer);
+          assert(answer === 'boop');
+          done();
+        });
+      });
+    });
+
+    it('should use a previously stored value when init is passed on a previous question and force is passed', function (done) {
+      stub(function (question, cb) {
+        return cb(null, {bar: 'boop'});
+      });
+
+      ask.set('foo', 'bar');
+      ask.set('bar', 'baz');
+      ask.once('foo', {init: true, foo: 'beep'}, function (err, answer) {
+        assert(!err);
+        assert(answer);
+        assert(answer === 'beep');
+        ask.once('bar', {force: true}, function (err, answer) {
           assert(!err);
           assert(answer);
           assert(answer === 'boop');
