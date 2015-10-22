@@ -19,7 +19,7 @@ var ask = require('ask-once')();
 **2. Ask a question!**
 
 ```js
-ask('May I have your username?', function (err, answer) {
+ask.once('May I have your username?', function (err, answer) {
   console.log(answer);
 });
 ```
@@ -49,7 +49,7 @@ var ask = require('ask-once')({
   }
 });
 
-ask('May I have your username?' function (err, answer) {
+ask.once('May I have your username?' function (err, answer) {
   console.log(answer);
 });
 ```
