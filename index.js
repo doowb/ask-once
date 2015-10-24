@@ -32,11 +32,12 @@ function Ask(options) {
   this.options = options || {};
   this.questions = utils.questions(this.options.questions);
 
-  var name = this.options.store && this.options.store.name;
-  name = name || (utils.project() + '.ask-once');
+  var store = this.options.store;
+  var name = store && store.name;
+  if (!name) name = 'ask-once.' + utils.project(process.cwd());
 
-  this.answers = utils.store(name, this.options.store);
-  this.previous = utils.store(this.answers.name + '.previous', this.answers.options);
+  this.answers = utils.store(name, store);
+  this.previous = utils.store(name + '.previous', this.answers.options);
 
   Object.defineProperty(this, 'data', {
     enumerable: true,
@@ -46,14 +47,53 @@ function Ask(options) {
   });
 }
 
+/**
+ * Set answer `key` with the given `value`. Answers
+ * are cached in memory on the `ask.answers.data` object,
+ * and they are also persisted to disk.
+ *
+ * ```js
+ * ask.set('a', 'b');
+ * console.log(ask.answers.data.a)
+ * //=> 'b'
+ * ```
+ * @param {String} `key`
+ * @api public
+ */
+
 Ask.prototype.set = function() {
   this.answers.set.apply(this.answers, arguments);
   return this;
 };
 
-Ask.prototype.get = function() {
+/**
+ * Get answer `key` from the answer store.
+ *
+ * ```js
+ * ask.set('a', 'b');
+ * ask.get('a');
+ * //=> 'b'
+ * ```
+ * @param {String} `key`
+ * @api public
+ */
+
+Ask.prototype.get = function(key) {
   return this.answers.get.apply(this.answers, arguments);
 };
+
+/**
+ * Delete an answer from the answer store.
+ *
+ * ```js
+ * ask.del('foo');
+ * ask.del(['foo', 'bar']);
+ * // delete the entire store
+ * ask.del({force: true});
+ * ```
+ * @param {String|Array|Object} `key` Pass a string or array of keys, or `{force: true}` to wipe out the entire store.
+ * @api public
+ */
 
 Ask.prototype.del = function() {
   this.answers.del.apply(this.answers, arguments);
@@ -111,11 +151,16 @@ Ask.prototype.once = function (key, options, cb) {
     if (err) return cb(err);
     answer = utils.get(answers, key);
 
-    // save answer to store
-    self.answers.set(key, answer);
+    // set answer to store
+    self.set(key, answer);
     cb(null, answer);
   });
 };
+
+/**
+ * Get stored question `key`, optionally passing a
+ * default answer to use.
+ */
 
 Ask.prototype.getQuestion = function(key, prevAnswer) {
   prevAnswer = prevAnswer || this.previous.get(key);
@@ -132,6 +177,9 @@ Ask.prototype.getQuestion = function(key, prevAnswer) {
   return key;
 };
 
+/**
+ * Wipe out all answers in the current store.
+ */
 
 Ask.prototype.handleInit = function(key) {
   var prevAnswer = this.get(key) || this.previous.get(key);
@@ -141,12 +189,18 @@ Ask.prototype.handleInit = function(key) {
   return prevAnswer;
 };
 
+/**
+ * Force ask-once to re-ask a question, even if an answer
+ * is already stored.
+ */
+
 Ask.prototype.handleForce = function(key) {
   var prevAnswer = this.get(key) || this.previous.get(key);
   this.previous.set(key, prevAnswer);
   this.del(key);
   return prevAnswer;
 };
+
 /**
  * Determine defaults to used for the question.
  */
